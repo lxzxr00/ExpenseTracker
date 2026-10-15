@@ -26,6 +26,11 @@ class user_account:
         path = os.getcwd()
         return os.path.exists(f'{path}/{username}')
 
+    def logout(self):
+        self.is_logged_in = False
+
+    
+
     def login(self, username, password):
         path = os.getcwd()
         if self.check_if_exists(username):
@@ -37,5 +42,5 @@ class user_account:
             print("Username does not exist")
             return
 
-
+current_user=user_account()
 print(os.getcwd())

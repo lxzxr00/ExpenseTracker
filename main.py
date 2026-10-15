@@ -29,7 +29,8 @@ def main(page : ft.Page):
             page.views.append(build_signup_view(page))
         if page.route == "/core":
             page.views.append(build_main_menu_view(page))
-
+        if page.route == "/login":
+            page.views.append(build_login_view(page))
 
         # Always need to update the page after the route is changed, so that you see the new page
         page.update()
