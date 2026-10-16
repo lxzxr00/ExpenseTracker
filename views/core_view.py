@@ -1,15 +1,14 @@
 import flet as ft
 import views.user
-from views.user import user_account
-
+from views.user import current_user
 
 # Main Menu Screen
 
 def build_main_menu_view(page: ft.Page):
 
     def logout_clicked(e):
-        pass
-
+        current_user.logout
+        page.navigate("/login")
 
     drawer = ft.NavigationDrawer(
         controls=[
@@ -66,7 +65,7 @@ def build_main_menu_view(page: ft.Page):
                             padding=ft.Padding(0, 50, 0, 50),
                         ),
                         ft.Text("You should be on you're main dashboard area"),
-                        ft.FilledButton(content=ft.Text("temporary text"), on_click = logout_clicked)
+                        ft.FilledButton(content=ft.Text("Logout"), on_click = logout_clicked)
                     ]
                 )
             )
