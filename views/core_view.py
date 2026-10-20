@@ -10,6 +10,9 @@ def build_main_menu_view(page: ft.Page):
         current_user.logout
         page.navigate("/login")
 
+    def add_expense_clicked(e):
+        pass
+
     drawer = ft.NavigationDrawer(
         controls=[
             ft.Container(
@@ -44,6 +47,11 @@ def build_main_menu_view(page: ft.Page):
     return ft.View(
         route="/core",
         drawer= drawer,
+        floating_action_button=ft.FloatingActionButton(
+            icon=ft.Icons.ADD,
+            on_click=add_expense_clicked,
+        ),
+        floating_action_button_location=ft.FloatingActionButtonLocation.END_FLOAT,
         controls=[
         ft.SafeArea(
                 ft.Column(
@@ -65,7 +73,7 @@ def build_main_menu_view(page: ft.Page):
                             padding=ft.Padding(0, 50, 0, 50),
                         ),
                         ft.Text("You should be on you're main dashboard area"),
-                        ft.FilledButton(content=ft.Text("Logout"), on_click = logout_clicked)
+                        ft.FilledButton(content=ft.Text("Logout"), on_click = logout_clicked),
                     ]
                 )
             )
