@@ -29,8 +29,6 @@ class user_account:
     def logout(self):
         self.is_logged_in = False
 
-    
-
     def login(self, username, password):
         path = os.getcwd()
         if self.check_if_exists(username):
