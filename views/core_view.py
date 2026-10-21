@@ -22,13 +22,13 @@ def build_main_menu_view(page: ft.Page):
                 ),
             ),
             ft.NavigationDrawerDestination(
-                icon=ft.Icons.DASHBOARD_OUTLINED,
-                selected_icon=ft.Icons.DASHBOARD,
+                icon=ft.Icons.HOME_OUTLINED,
+                selected_icon=ft.Icons.HOME,
                 label="Dashboard",
             ),
             ft.NavigationDrawerDestination(
-                icon=ft.Icons.NOTIFICATIONS_OUTLINED,
-                selected_icon=ft.Icons.NOTIFICATIONS,
+                icon=ft.Icons.GROUP_ADD_OUTLINED,
+                selected_icon=ft.Icons.GROUP_ADD,
                 label="Create Groups",
                 #on_click=function1,
             ),

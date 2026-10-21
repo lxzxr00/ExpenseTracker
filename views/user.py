@@ -1,6 +1,6 @@
 import os
-
-
+from argon2 import PasswordHasher
+from argon2.exceptions import VerifyMismatchError
 
 # We're going to use this file to store our very important user variables
 # For now, we're not going to be concerned with hashing the string values
@@ -22,7 +22,7 @@ class user_account:
         path = os.getcwd()
         os.mkdir(f'{path}/{username}')
         with open(f"{path}/{username}/{username}.txt", "w") as f:
-            f.write(password)
+            f.write(ph.hash(password))
 
     def check_if_exists(self, username):
         path = os.getcwd()
@@ -36,17 +36,29 @@ class user_account:
 
     def login(self, username, password):
         path = os.getcwd()
-        if self.check_if_exists(username):
-            with open(f"{path}/{username}/{username}.txt", "r") as f:
-                if password == f.read():
-                    self.is_logged_in = True
-                    self.username = username
-                    print("Successfully logged in")
-        else:
+        if not self.check_if_exists(username):
             print("Username does not exist")
             return
 
+        with open(f"{path}/{username}/{username}.txt", "r") as f:
+            stored_hash = f.read().strip()
+
+        try:
+            ph.verify(stored_hash, password)
+            self.is_logged_in = True
+            self.username = username
+            print("Successfully Logged in")
+        except VerifyMismatchError:
+            print("Incorrect Password")
+
+
     def add_expense(self, label, expense):
         pass
+
+
+#=======================================================================================================================
+# Hashing setup
+ph = PasswordHasher()
+#=======================================================================================================================
 
 current_user=user_account()
