@@ -17,10 +17,8 @@ def build_login_view(page: ft.Page):
             return
         print("Username entered : ", username_field.value)
         print("Password entered : ", password_field.value)
-        #user_account.login(username_field.value, password_field.value)
-        account = views.user.user_account()
-        account.login(username_field.value, password_field.value)
-        if account.is_logged_in:
+        views.user.current_user.login(username_field.value, password_field.value)
+        if views.user.current_user.is_logged_in:
             print("Logged in")
             page.navigate("/core")
         else:
@@ -50,7 +48,7 @@ def build_login_view(page: ft.Page):
                         ft.Container(username_field, alignment = ft.Alignment( 0, 0),),
                         ft.Text("Password : "),
                         ft.Container(password_field, alignment = ft.Alignment( 0, 0),),
-                        ft.FilledButton(content = ft.Text("Log in"), on_click = login_clicked),
+                        ft.FilledButton(content = ft.Text(" Log in "), on_click = login_clicked),
                         ft.FilledButton(content = ft.Text("Sign up"), on_click = create_account)
                     ]
                 )

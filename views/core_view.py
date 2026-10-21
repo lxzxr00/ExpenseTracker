@@ -18,17 +18,17 @@ def build_main_menu_view(page: ft.Page):
             ft.Container(
                 padding=ft.Padding.only(left=28, top=20, bottom=12),
                 content=ft.Text(
-                    "Hello, <username>" , theme_style=ft.TextThemeStyle.TITLE_MEDIUM
+                    f"Hello, {current_user.get_username()}" , theme_style=ft.TextThemeStyle.TITLE_MEDIUM
                 ),
             ),
             ft.NavigationDrawerDestination(
-                icon=ft.Icons.DASHBOARD_OUTLINED,
-                selected_icon=ft.Icons.DASHBOARD,
+                icon=ft.Icons.HOME_OUTLINED,
+                selected_icon=ft.Icons.HOME,
                 label="Dashboard",
             ),
             ft.NavigationDrawerDestination(
-                icon=ft.Icons.NOTIFICATIONS_OUTLINED,
-                selected_icon=ft.Icons.NOTIFICATIONS,
+                icon=ft.Icons.GROUP_ADD_OUTLINED,
+                selected_icon=ft.Icons.GROUP_ADD,
                 label="Create Groups",
                 #on_click=function1,
             ),
