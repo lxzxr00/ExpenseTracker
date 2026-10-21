@@ -3,6 +3,7 @@ from views.login_view import build_login_view
 from views.signup_view import build_signup_view
 from views.core_view import build_main_menu_view
 from views.add_expense_view import build_add_expense_view
+
 # Navigation in flet is hierarchal, PAGES have multiple VIEWS inside of them
 # A PAGE is the main window or browser session that is created for the application
 # A VIEW is an individual screen or ROUTE stacked inside the PAGE

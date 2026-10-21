@@ -18,7 +18,7 @@ def build_main_menu_view(page: ft.Page):
             ft.Container(
                 padding=ft.Padding.only(left=28, top=20, bottom=12),
                 content=ft.Text(
-                    "Hello, <username>" , theme_style=ft.TextThemeStyle.TITLE_MEDIUM
+                    f"Hello, {current_user.get_username()}" , theme_style=ft.TextThemeStyle.TITLE_MEDIUM
                 ),
             ),
             ft.NavigationDrawerDestination(
