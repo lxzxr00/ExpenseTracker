@@ -11,7 +11,7 @@ def build_main_menu_view(page: ft.Page):
         page.navigate("/login")
 
     def add_expense_clicked(e):
-        pass
+        page.navigate("/add_expense")
 
     drawer = ft.NavigationDrawer(
         controls=[
