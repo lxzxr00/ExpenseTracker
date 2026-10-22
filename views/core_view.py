@@ -13,6 +13,9 @@ def build_main_menu_view(page: ft.Page):
     def add_expense_clicked(e):
         page.navigate("/add_expense")
 
+    def add_budget_clicked(e):
+        page.navigate("/add_budget")
+
     drawer = ft.NavigationDrawer(
         controls=[
             ft.Container(
@@ -37,9 +40,16 @@ def build_main_menu_view(page: ft.Page):
                 selected_icon=ft.Icons.SETTINGS,
                 label="Settings",
             ),
+            ft.NavigationDrawerDestination(
+                icon=ft.Icons.ATTACH_MONEY_OUTLINED,
+                selected_icon=ft.Icons.ATTACH_MONEY,
+                label="Budget",
+                
+            ),
         ],
     )
 
+    
     async def handle_show_drawer(e):
         await page.show_drawer()
 
@@ -61,6 +71,7 @@ def build_main_menu_view(page: ft.Page):
                             icon=ft.Icons.MENU,
                             on_click=handle_show_drawer
                         ),
+                        
                         ft.Container(
                             content=ft.Text(
                                 "Expense Tracker V1",
@@ -80,3 +91,4 @@ def build_main_menu_view(page: ft.Page):
         ],
     )
 
+    
