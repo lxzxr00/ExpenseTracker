@@ -3,13 +3,14 @@ from views.login_view import build_login_view
 from views.signup_view import build_signup_view
 from views.core_view import build_main_menu_view
 from views.add_expense_view import build_add_expense_view
+from views.add_budget_view import build_add_budget_view
 
 # Navigation in flet is hierarchal, PAGES have multiple VIEWS inside of them
 # A PAGE is the main window or browser session that is created for the application
 # A VIEW is an individual screen or ROUTE stacked inside the PAGE
 
 
-def main(page : ft.Page):
+def main(page : ft.Page,):
 
     # Page dimensions to mimic phone dimensions
     page.title = "Expense Tracker"
@@ -34,6 +35,8 @@ def main(page : ft.Page):
             page.views.append(build_login_view(page))
         if page.route == "/add_expense":
             page.views.append(build_add_expense_view(page))
+        if page.route == "/add_budget":
+            page.views.append(build_add_budget_view(page))
 
         # Always need to update the page after the route is changed, so that you see the new page
         page.update()

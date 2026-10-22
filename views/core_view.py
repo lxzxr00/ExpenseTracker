@@ -13,7 +13,26 @@ def build_main_menu_view(page: ft.Page):
     def add_expense_clicked(e):
         page.navigate("/add_expense")
 
+    def add_budget_clicked(e):
+        page.navigate("/add_budget")
+
+    async def handle_show_drawer(e):
+        await page.show_drawer()
+    
+    async def handle_drawer_change(e):
+        await page.close_drawer()
+        index = e.control.selected_index
+        if index == 0:
+            page.navigate("/core")
+        elif index == 1:
+            page.navigate("/groups")
+        elif index == 2:
+            page.navigate("/add_budget")
+        elif index == 3:
+            page.navigate("/settings")
+    
     drawer = ft.NavigationDrawer(
+        on_change=handle_drawer_change,
         controls=[
             ft.Container(
                 padding=ft.Padding.only(left=28, top=20, bottom=12),
@@ -33,16 +52,21 @@ def build_main_menu_view(page: ft.Page):
                 #on_click=function1,
             ),
             ft.NavigationDrawerDestination(
+                icon=ft.Icons.ATTACH_MONEY_OUTLINED,
+                selected_icon=ft.Icons.ATTACH_MONEY,
+                label="Budget",
+            ),
+            ft.NavigationDrawerDestination(
                 icon=ft.Icons.SETTINGS_OUTLINED,
                 selected_icon=ft.Icons.SETTINGS,
                 label="Settings",
             ),
+            
         ],
     )
 
-    async def handle_show_drawer(e):
-        await page.show_drawer()
-
+    
+    
 
     return ft.View(
         route="/core",
@@ -61,6 +85,7 @@ def build_main_menu_view(page: ft.Page):
                             icon=ft.Icons.MENU,
                             on_click=handle_show_drawer
                         ),
+                        
                         ft.Container(
                             content=ft.Text(
                                 "Expense Tracker V1",
@@ -80,3 +105,4 @@ def build_main_menu_view(page: ft.Page):
         ],
     )
 
+    
