@@ -1,6 +1,4 @@
-import os
-from argon2 import PasswordHasher
-from argon2.exceptions import VerifyMismatchError
+from db import supabase
 
 # We're going to use this file to store our very important user variables
 # For now, we're not going to be concerned with hashing the string values
@@ -14,51 +12,42 @@ from argon2.exceptions import VerifyMismatchError
 
 class user_account:
     def __init__(self):
-        self.username = ""
-        self.password = ""
+        self.email = ""
+        self.user_id = None
         self.is_logged_in = False
 
-    def create_account(self, username, password):
-        path = os.getcwd()
-        os.mkdir(f'{path}/{username}')
-        with open(f"{path}/{username}/{username}.txt", "w") as f:
-            f.write(ph.hash(password))
+    def create_account(self, email, password):
+        try:
+            supabase.auth.sign_up({"email": email, "password": password})
+            print("Successfully created account")
+            return True
+        except Exception as err:
+            print("Sign up failed: ", err)
+            return False
 
-    def check_if_exists(self, username):
-        path = os.getcwd()
-        return os.path.exists(f'{path}/{username}')
+    def login(self, email, password):
+        try:
+            response = supabase.auth.sign_in_with_password(
+                {"email": email, "password": password}
+            )
+            self.is_logged_in = True
+            self.email = response.user.email
+            print("Successfully logged in")
+            return True
+        except Exception as err:
+            print("Login failed: ", err)
+            return False
 
     def logout(self):
+        supabase.auth.sign_out()
         self.is_logged_in = False
+        self.email = ""
+        self.user_id = None
 
     def get_username(self):
-        return self.username
-
-    def login(self, username, password):
-        path = os.getcwd()
-        if not self.check_if_exists(username):
-            print("Username does not exist")
-            return
-
-        with open(f"{path}/{username}/{username}.txt", "r") as f:
-            stored_hash = f.read().strip()
-
-        try:
-            ph.verify(stored_hash, password)
-            self.is_logged_in = True
-            self.username = username
-            print("Successfully Logged in")
-        except VerifyMismatchError:
-            print("Incorrect Password")
-
+        return self.email.split("@")[0]
 
     def add_expense(self, label, expense):
         pass
-
-
-#=======================================================================================================================
-# Hashing setup
-ph = PasswordHasher()
-#=======================================================================================================================
 
 current_user=user_account()
