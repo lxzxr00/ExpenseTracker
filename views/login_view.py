@@ -7,17 +7,17 @@ from views.user import user_account
 
 def build_login_view(page: ft.Page):
 
-    username_field = ft.TextField(keyboard_type = ft.KeyboardType.TEXT)
+    email_field = ft.TextField(keyboard_type = ft.KeyboardType.TEXT)
     password_field = ft.TextField(keyboard_type = ft.KeyboardType.TEXT,
                                   password = True)
 
     def login_clicked(e):
-        if username_field.value == "" or password_field.value == "":
+        if email_field.value == "" or password_field.value == "":
             print("username or password field is empty")
             return
-        print("Username entered : ", username_field.value)
+        print("Email entered : ", email_field.value)
         print("Password entered : ", password_field.value)
-        views.user.current_user.login(username_field.value, password_field.value)
+        views.user.current_user.login(email_field.value, password_field.value)
         if views.user.current_user.is_logged_in:
             print("Logged in")
             page.navigate("/core")
@@ -44,8 +44,8 @@ def build_login_view(page: ft.Page):
                             width = float("inf"),
                             padding = ft.Padding( 0, 50, 0, 50),
                         ),
-                        ft.Text("Username : "),
-                        ft.Container(username_field, alignment = ft.Alignment( 0, 0),),
+                        ft.Text("Email : "),
+                        ft.Container(email_field, alignment = ft.Alignment( 0, 0),),
                         ft.Text("Password : "),
                         ft.Container(password_field, alignment = ft.Alignment( 0, 0),),
                         ft.FilledButton(content = ft.Text(" Log in "), on_click = login_clicked),

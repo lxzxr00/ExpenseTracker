@@ -6,14 +6,14 @@ import os
 
 def build_signup_view(page: ft.Page):
 
-    username_field = ft.TextField(keyboard_type= ft.KeyboardType.TEXT)
+    email_field = ft.TextField(keyboard_type= ft.KeyboardType.TEXT)
     password_field = ft.TextField(keyboard_type= ft.KeyboardType.TEXT,
                                   password = True)
     confirm_password_field = ft.TextField(keyboard_type= ft.KeyboardType.TEXT,
                                           password = True)
 
     def send_create_request(e):
-        print("username_field = ", username_field.value)
+        print("email_field = ", email_field.value)
         print("password_field = ", password_field.value)
         print("confirm_password_field = ", confirm_password_field.value)
 
@@ -21,7 +21,7 @@ def build_signup_view(page: ft.Page):
             print("Your passwords match")
             # Here we are creating the object that is going to be saved in our document
             account = views.user.user_account()
-            account.create_account(username_field.value, password_field.value)
+            account.create_account(email_field.value, password_field.value)
 
             page.navigate("/login")
         else:
@@ -44,8 +44,8 @@ def build_signup_view(page: ft.Page):
                             width = float("inf"),
                             padding = ft.Padding( 0, 50, 0, 50),
                         ),
-                        ft.Text("Username : "),
-                        ft.Container(username_field, alignment = ft.Alignment( 0, 0),),
+                        ft.Text("Email : "),
+                        ft.Container(email_field, alignment = ft.Alignment( 0, 0),),
                         ft.Text("Password : "),
                         ft.Container(password_field, alignment = ft.Alignment( 0, 0),),
                         ft.Text("Confirm password : "),
