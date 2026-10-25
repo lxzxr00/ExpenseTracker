@@ -282,6 +282,15 @@ def build_main_menu_view(page: ft.Page):
     def add_budget_clicked(e):
         page.navigate("/add_budget")
 
+    def add_groups_clicked(e):
+        page.navigate("/add_groups")
+
+    def transfer_funds_clicked(e):
+        page.navigate("/transfer_funds")
+
+    def settings_clicked(e):
+        page.navigate("/settings")
+
     async def handle_show_drawer(e):
         await page.show_drawer()
 
@@ -291,10 +300,14 @@ def build_main_menu_view(page: ft.Page):
         if index == 0:
             page.navigate("/core")
         elif index == 1:
-            page.navigate("/groups")
+            page.navigate("/add_groups")
         elif index == 2:
-            page.navigate("/add_budget")
+            page.navigate("/transfer_funds")
         elif index == 3:
+            page.navigate("/add_budget")
+        elif index == 4:
+            page.navigate("/summary")
+        elif index == 5:
             page.navigate("/settings")
 
     drawer = ft.NavigationDrawer(
@@ -317,9 +330,19 @@ def build_main_menu_view(page: ft.Page):
                 label="Create Groups",
             ),
             ft.NavigationDrawerDestination(
+                icon=ft.Icons.SEND_OUTLINED,
+                selected_icon=ft.Icons.SEND,
+                label="Transfer Funds",
+            ),
+            ft.NavigationDrawerDestination(
                 icon=ft.Icons.ATTACH_MONEY_OUTLINED,
                 selected_icon=ft.Icons.ATTACH_MONEY,
                 label="Budget",
+            ),
+            ft.NavigationDrawerDestination(
+                icon=ft.Icons.DESCRIPTION_OUTLINED,
+                selected_icon=ft.Icons.DESCRIPTION,
+                label="Summary",
             ),
             ft.NavigationDrawerDestination(
                 icon=ft.Icons.SETTINGS_OUTLINED,

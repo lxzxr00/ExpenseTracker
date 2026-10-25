@@ -4,6 +4,10 @@ from views.signup_view import build_signup_view
 from views.core_view import build_main_menu_view
 from views.add_expense_view import build_add_expense_view
 from views.add_budget_view import build_add_budget_view
+from views.summary_view import build_summary_view
+from views.add_groups_view import build_add_groups_view
+from views.transfer_view import build_transfer_funds_view
+from views.settings_view import build_settings_view
 
 # Navigation in flet is hierarchal, PAGES have multiple VIEWS inside of them
 # A PAGE is the main window or browser session that is created for the application
@@ -37,7 +41,14 @@ def main(page : ft.Page,):
             page.views.append(build_add_expense_view(page))
         if page.route == "/add_budget":
             page.views.append(build_add_budget_view(page))
-
+        if page.route == "/summary":
+            page.views.append(build_summary_view(page))
+        if page.route == "/add_groups":
+            page.views.append(build_add_groups_view(page))
+        if page.route == "/transfer_funds":
+            page.views.append(build_transfer_funds_view(page))
+        if page.route == "/settings":
+            page.views.append(build_settings_view(page))
         # Always need to update the page after the route is changed, so that you see the new page
         page.update()
 
