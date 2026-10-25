@@ -28,8 +28,6 @@ def build_settings_view(page: ft.Page):
                             width=float("inf"),
                             padding=ft.Padding(0, 50, 0, 50),
                         ),
-                        ft.Text("Settings : "),
-                        ft.Container(settings_field, alignment = ft.Alignment( 0, 0),),
                         ft.FilledButton(content=ft.Text("Save"), on_click=settings_clicked)
                     ]
                 )

@@ -288,6 +288,9 @@ def build_main_menu_view(page: ft.Page):
     def transfer_funds_clicked(e):
         page.navigate("/transfer_funds")
 
+    def group_expenses_clicked(e):
+        page.navigate("/group_expenses")
+
     def settings_clicked(e):
         page.navigate("/settings")
 
@@ -302,12 +305,14 @@ def build_main_menu_view(page: ft.Page):
         elif index == 1:
             page.navigate("/add_groups")
         elif index == 2:
-            page.navigate("/transfer_funds")
+            page.navigate("/group_expenses")
         elif index == 3:
-            page.navigate("/add_budget")
+            page.navigate("/transfer_funds")
         elif index == 4:
-            page.navigate("/summary")
+            page.navigate("/add_budget")
         elif index == 5:
+            page.navigate("/summary")
+        elif index == 6:
             page.navigate("/settings")
 
     drawer = ft.NavigationDrawer(
@@ -328,6 +333,11 @@ def build_main_menu_view(page: ft.Page):
                 icon=ft.Icons.GROUP_ADD_OUTLINED,
                 selected_icon=ft.Icons.GROUP_ADD,
                 label="Create Groups",
+            ),
+            ft.NavigationDrawerDestination(
+                icon=ft.Icons.GROUPS_OUTLINED,
+                selected_icon=ft.Icons.GROUPS,
+                label="Group Expenses",
             ),
             ft.NavigationDrawerDestination(
                 icon=ft.Icons.SEND_OUTLINED,
