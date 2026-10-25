@@ -47,21 +47,29 @@ class user_account:
     def get_username(self):
         return self.email.split("@")[0]
 
-    def add_expense(self, label, amount):
+    def add_expense(self, label, amount, category_id=None):
         try:
             supabase.table("expenses").insert(
-                {"label": label, "amount": amount}
+                {"label": label, "amount": amount, "category_id": category_id}
             ).execute()
             return True
         except Exception as err:
             print("Add expense failed: ", err)
             return False
 
+    def delete_expense(self, expense_id):
+        try:
+            supabase.table("expenses").delete().eq("id", expense_id).execute()
+            return True
+        except Exception as err:
+            print("Delete expense failed: ", err)
+            return False
+
     def get_expenses(self):
         try:
             response = (
                 supabase.table("expenses")
-                    .select("id", "label", "amount", "created_at")
+                    .select("id, label, amount, created_at, category_id, categories(name, color)")
                     .order("created_at", desc=True)
                     .execute()
                     )
@@ -70,14 +78,60 @@ class user_account:
             print("Get expenses failed: ", err)
             return []
 
-    def update_expense(self, expense_id, label, amount):
+    def update_expense(self, expense_id, label, amount, category_id):
         try:
             supabase.table("expenses").update(
-                {"label": label, "amount": amount}
+                {"label": label, "amount": amount, "category_id": category_id}
             ).eq("id", expense_id).execute()
             return True
         except Exception as err:
             print("Update expense failed: ", err)
             return False
 
+# Below is for the budget view =========================================================================================
+
+    def get_categories(self):
+        try:
+            response = (
+                supabase.table("categories")
+                .select("id, name, color, budget")
+                .order("name")
+                .execute()
+            )
+            return response.data
+        except Exception as err:
+            print("Could not load categories: ", err)
+            return []
+
+
+    def add_category(self, name, color, budget):
+        try:
+            supabase.table("categories").insert(
+                {"name": name, "color": color, "budget": budget}
+            ).execute()
+            return True
+        except Exception as err:
+            print("Could not add Category: ", err)
+            return False
+
+    def update_category(self, id, name, color, budget):
+        try:
+            supabase.table("categories").update(
+                {"name": name, "color": color, "budget": budget}
+            ).eq("id", id).execute()
+            return True
+        except Exception as err:
+            print("Could not update Category: ", err)
+            return False
+
+    def delete_category(self, id):
+        try:
+            supabase.table("categories").delete().eq("id", id).execute()
+            return True
+        except Exception as err:
+            print("Could not delete Category: ", err)
+            return False
+
+
+# Creating the user object corresponding to the email+password
 current_user=user_account()

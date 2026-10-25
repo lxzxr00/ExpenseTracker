@@ -1,27 +1,39 @@
 import flet as ft
+from flet import KeyboardType
+
 import views.user
 from views.user import user_account, current_user
+from views.widgets import category_dropdown, selected_category_id
+
 
 
 def build_add_expense_view(page: ft.Page):
+    user = views.user.current_user
+    categories = user.get_categories()
 
-    label_field = ft.TextField(keyboard_type = ft.KeyboardType.TEXT)
-    amount_field = ft.TextField(keyboard_type = ft.KeyboardType.TEXT)
+    label_field = ft.TextField(label="Label")
+    amount_field = ft.TextField(label="Amount", keyboard_type=KeyboardType.NUMBER)
+    category_field = category_dropdown(categories)
 
     def add_expense_clicked():
-        label = label_field.value.strip()
-        try:
-            amount = float(amount_field.value)
-        except (TypeError, ValueError):
-            print("Amount must be a number")
+        label_field.error_text = None
+        amount_field.error_text = None
+
+        label = str(label_field.value or "").strip()
+        if not label:
+            label_field.error_text = "Required"
+            page.update()
             return
 
-        if not label:
-            print("Label cannot be empty")
+        try:
+            amount = float(str(amount_field.value or "").strip())
+        except ValueError:
+            amount_field.error_text = "Invalid amount"
+            page.update()
             return
 
         # After you've called the value's to be saved, it takes you back to the core view
-        if views.user.current_user.add_expense(label, amount):
+        if user.add_expense(label, amount, selected_category_id(category_field)):
             page.navigate("/core")
 
     def go_back():
@@ -45,14 +57,15 @@ def build_add_expense_view(page: ft.Page):
                                 width=float("inf"),
                                 padding=ft.Padding(0, 50, 0, 50),
                             ),
-                            ft.Text("Label  : "),
-                            ft.Container(label_field, alignment = ft.Alignment( 0, 0),),
-                            ft.Text("Amount : "),
-                            ft.Container(amount_field, alignment = ft.Alignment( 0, 0),),
-                            ft.FilledButton(content=ft.Text("Add Expense"), on_click=add_expense_clicked)
-
-                            
-                        ]
+                            label_field,
+                            amount_field,
+                            category_field,
+                            ft.FilledButton(
+                                content=ft.Text("Add Expense"),
+                                on_click=add_expense_clicked,
+                            ),
+                        ],
+                        spacing=16,
                     )
                 )
     
