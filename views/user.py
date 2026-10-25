@@ -47,7 +47,37 @@ class user_account:
     def get_username(self):
         return self.email.split("@")[0]
 
-    def add_expense(self, label, expense):
-        pass
+    def add_expense(self, label, amount):
+        try:
+            supabase.table("expenses").insert(
+                {"label": label, "amount": amount}
+            ).execute()
+            return True
+        except Exception as err:
+            print("Add expense failed: ", err)
+            return False
+
+    def get_expenses(self):
+        try:
+            response = (
+                supabase.table("expenses")
+                    .select("id", "label", "amount", "created_at")
+                    .order("created_at", desc=True)
+                    .execute()
+                    )
+            return response.data
+        except Exception as err:
+            print("Get expenses failed: ", err)
+            return []
+
+    def update_expense(self, expense_id, label, amount):
+        try:
+            supabase.table("expenses").update(
+                {"label": label, "amount": amount}
+            ).eq("id", expense_id).execute()
+            return True
+        except Exception as err:
+            print("Update expense failed: ", err)
+            return False
 
 current_user=user_account()

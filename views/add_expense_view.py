@@ -6,11 +6,23 @@ from views.user import user_account, current_user
 def build_add_expense_view(page: ft.Page):
 
     label_field = ft.TextField(keyboard_type = ft.KeyboardType.TEXT)
-    expense_field = ft.TextField(keyboard_type = ft.KeyboardType.TEXT)
+    amount_field = ft.TextField(keyboard_type = ft.KeyboardType.TEXT)
 
     def add_expense_clicked():
-        user_account.add_expense(current_user, label_field, expense_field)
-        page.navigate("/core")
+        label = label_field.value.strip()
+        try:
+            amount = float(amount_field.value)
+        except (TypeError, ValueError):
+            print("Amount must be a number")
+            return
+
+        if not label:
+            print("Label cannot be empty")
+            return
+
+        # After you've called the value's to be saved, it takes you back to the core view
+        if views.user.current_user.add_expense(label, amount):
+            page.navigate("/core")
 
     def go_back():
         page.navigate("/core")
@@ -36,7 +48,7 @@ def build_add_expense_view(page: ft.Page):
                             ft.Text("Label  : "),
                             ft.Container(label_field, alignment = ft.Alignment( 0, 0),),
                             ft.Text("Amount : "),
-                            ft.Container(expense_field, alignment = ft.Alignment( 0, 0),),
+                            ft.Container(amount_field, alignment = ft.Alignment( 0, 0),),
                             ft.FilledButton(content=ft.Text("Add Expense"), on_click=add_expense_clicked)
 
                             
