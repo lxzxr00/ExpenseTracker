@@ -1,28 +1,142 @@
 import flet as ft
 import views.user
 from views.user import current_user
-from db import supabase
+from views.widgets import category_dropdown, selected_category_id, money
+
 
 # Main Menu Screen
 
 def build_main_menu_view(page: ft.Page):
 
     expenses = views.user.current_user.get_expenses()
+    categories = views.user.current_user.get_categories()
+    categories_by_id = {c["id"]: c for c in categories}
     default_count = 5
     visible_count = default_count
     expense_list = ft.Column(spacing=0)
+    UNCATEGORIZED_COLOR = "#9E9E9E"
+    summary = ft.Column(spacing=12)
 
+    def cents(value):
+        return int(round(value * 100))
+
+    # This is the Dashboard that displays the expenses per category ====================================================
+    # Flet doesn't have a widget that can use more than one color, so we're going to try and make one ==================
+    def render_summary():
+        # We need to add up spending by category first
+        totals = {}
+        for expense in expenses:
+            cid = expense.get("category_id")
+            totals[cid] = totals.get(cid, 0) + float(expense["amount"])
+
+        spent = round(sum(totals.values()), 2)
+        budget = round(sum(float(c["budget"]) for c in categories if c["budget"] is not None), 2)
+
+        # Creation of the bar segments with the biggest category first =======================================
+        segments = []
+        legend = []
+        for cid, amount in sorted(totals.items(), key=lambda item: -item[1]):
+            if amount <= 0:
+                continue
+            cat = categories_by_id.get(cid)
+            name = cat["name"] if cat else "Uncategorized"
+            color = cat["color"] if cat else UNCATEGORIZED_COLOR
+
+            segments.append(
+                ft.Container(
+                    expand=cents(amount),
+                    height=24,
+                    bgcolor=color,
+                    tooltip=f"{name}: {money(amount)}",
+                )
+            )
+            legend.append(
+                ft.Row(
+                    [
+                        ft.Container(width=12, height=12, border_radius=6, bgcolor=color),
+                        ft.Text(f"{name}  {money(amount)}", size=13),
+                    ],
+                    spacing=6,
+                    tight=True,
+                )
+            )
+        # Empty space for the budget that's left =============================================================
+        if budget > spent:
+            segments.append(ft.Container(expand=cents(budget - spent), height=24))
+
+        # Header Text ========================================================================================
+        over = budget > 0 and spent > budget
+        if budget > 0:
+            headline = f"{money(spent)} of {money(budget)} spent"
+            if over:
+                detail = ft.Text(f"Over budget by {money(spent - budget)}", color=ft.Colors.ERROR)
+            else:
+                detail = ft.Text(f"{money(budget - spent)} left", color=ft.Colors.ON_SURFACE_VARIANT)
+        else:
+            headline = f"{money(spent)} spent"
+            detail = ft.Text(
+                "Set category budgets on the Budget page to track a limit.",
+                color=ft.Colors.ON_SURFACE_VARIANT,
+                italic=True,
+            )
+
+        # Per category warnings ==============================================================================
+        warnings = []
+        for c in categories:
+            if c["budget"] is None:
+                continue
+            cat_spent = totals.get(c["id"], 0)
+            if cat_spent > float(c["budget"]):
+                warnings.append(
+                    ft.Row(
+                        [
+                            ft.Icon(ft.Icons.WARNING_AMBER, color=ft.Colors.ERROR, size=18),
+                            ft.Text(
+                                f"{c['name']} is over budget by {money(cat_spent - float(c['budget']))}",
+                                color=ft.Colors.ERROR,
+                            ),
+                        ],
+                        spacing=6,
+                    )
+                )
+
+        # Construction =======================================================================================
+        summary.controls = [
+            ft.Text(
+                headline,
+                size=22,
+                weight=ft.FontWeight.BOLD,
+                color=ft.Colors.ERROR if over else None,
+            ),
+            detail,
+            ft.Container(
+                content=ft.Row(segments, spacing=0),
+                height=24,
+                border_radius=12,
+                bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
+                clip_behavior=ft.ClipBehavior.ANTI_ALIAS,
+            ),
+            ft.Row(legend, wrap=True, spacing=16, run_spacing=8)
+            if legend
+            else ft.Text("No expenses yet.", italic=True),
+            *warnings
+        ]
 
     #This updates and builds the tiles, as well as gives them their functionality ======================================
     def render_list():
         expense_list.controls.clear()
 
         for expense in expenses[:visible_count]:
+            cat = expense.get("categories")
+            date = expense["created_at"][:10]
             expense_list.controls.append(
                 ft.ListTile(
-                    leading=ft.Icon(ft.Icons.RECEIPT_LONG),
+                    leading=ft.Icon(
+                        ft.Icons.RECEIPT_LONG,
+                        color=cat["color"] if cat else ft.Colors.ON_SURFACE_VARIANT,
+                    ),
                     title=ft.Text(expense["label"]),
-                    subtitle=ft.Text(expense["created_at"][:10]),
+                    subtitle=ft.Text(f"{date} - {cat['name']}" if cat else date),
                     trailing=ft.Text(f"${float(expense['amount']):,.2f}", size=20),
                     on_click=lambda e, expense=expense: open_edit_dialog(expense),
                 )
@@ -50,17 +164,19 @@ def build_main_menu_view(page: ft.Page):
                 ft.Row(buttons, alignment=ft.MainAxisAlignment.CENTER)
             )
 
+        render_summary()
+
     def show_more(e):
         nonlocal visible_count
         visible_count += default_count
         render_list()
-        expense_list.update()
+        page.update()
 
     def show_less(e):
         nonlocal visible_count
         visible_count = default_count
         render_list()
-        expense_list.update()
+        page.update()
 
     # This is the end of the buttons ===================================================================================
 
@@ -72,32 +188,80 @@ def build_main_menu_view(page: ft.Page):
             value=str(expense["amount"]),
             keyboard_type=ft.KeyboardType.NUMBER,
         )
+        category_field = category_dropdown(categories, expense.get("category_id"))
 
         def save(e):
-            label = label_field.value.strip()
-            try:
-                amount = float(amount_field.value.strip())
-            except (TypeError, ValueError):
-                amount_field.error_text = "enter a number"
-                amount_field.update()
-                return
+            label_field.error_text = None
+            amount_field.error_text = None
+
+            label = str(label_field.value or "").strip()
             if not label:
                 label_field.error_text = "Required"
                 label_field.update()
                 return
+            try:
+                amount = float(str(amount_field.value or "").strip())
+            except (TypeError, ValueError):
+                amount_field.error_text = "enter a number"
+                amount_field.update()
+                return
 
-            if views.user.current_user.update_expense(expense["id"], label, amount):
+            category_id = selected_category_id(category_field)
+
+            if views.user.current_user.update_expense(expense["id"], label, amount, category_id):
+                cat = categories_by_id.get(category_id)
                 expense["label"] = label
                 expense["amount"] = amount
+                expense["category_id"] = category_id
+                expense["categories"] = (
+                    {"name": cat["name"], "color": cat["color"]} if cat else None
+                )
                 page.pop_dialog()
                 render_list()
-                expense_list.update()
+                page.update()
+
+        def confirm_delete(e):
+            page.pop_dialog()
+            page.show_dialog(
+                ft.AlertDialog(
+                    title=ft.Text("Delete expense?"),
+                    content= ft.Text(
+                        f"\"{expense['label']}\" (${float(expense['amount']):,.2f}) "
+                        "Will be permanently deleted",
+                    ),
+                    actions=[
+                        ft.TextButton("Cancel", on_click=lambda e: page.pop_dialog()),
+                        ft.FilledButton(
+                            "Delete",
+                            on_click=delete,
+                            style=ft.ButtonStyle(bgcolor=ft.Colors.ERROR),
+                        )
+                    ]
+                )
+            )
+
+        def delete(e):
+            if views.user.current_user.delete_expense(expense["id"]):
+                expenses.remove(expense)
+                page.pop_dialog()
+                render_list()
+                page.update()
+
 
         page.show_dialog(
             ft.AlertDialog(
                 title="Edit expense",
-                content=ft.Column([label_field, amount_field], tight=True),
+                content=ft.Column(
+                    [label_field, amount_field, category_field],
+                    tight=True,
+                    width=320,
+                ),
                 actions=[
+                    ft.TextButton(
+                        "Delete",
+                        on_click=confirm_delete,
+                        style=ft.ButtonStyle(color=ft.Colors.ERROR),
+                    ),
                     ft.TextButton("Cancel", on_click=lambda e: page.pop_dialog()),
                     ft.TextButton("Save", on_click=save),
                 ]
@@ -109,7 +273,7 @@ def build_main_menu_view(page: ft.Page):
     render_list()
 
     def logout_clicked(e):
-        current_user.logout
+        current_user.logout()
         page.navigate("/login")
 
     def add_expense_clicked(e):
@@ -168,6 +332,7 @@ def build_main_menu_view(page: ft.Page):
 
     return ft.View(
         route="/core",
+        scroll=ft.ScrollMode.AUTO,
         drawer= drawer,
         floating_action_button=ft.FloatingActionButton(
             icon=ft.Icons.ADD,
@@ -194,6 +359,13 @@ def build_main_menu_view(page: ft.Page):
                             alignment=ft.Alignment(0, 0),
                             width=float("inf"),
                             padding=ft.Padding(0, 50, 0, 50),
+                        ),
+                        ft.Container(
+                            content=summary,
+                            padding=20,
+                            border_radius=12,
+                            bgcolor=ft.Colors.SURFACE_CONTAINER_LOW,
+                            width=float("inf"),
                         ),
                         ft.Text("Recent expenses", size=18, weight=ft.FontWeight.BOLD),
                         expense_list,
