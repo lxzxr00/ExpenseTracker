@@ -11,6 +11,7 @@ def build_login_view(page: ft.Page):
         label="Email",
         keyboard_type = ft.KeyboardType.EMAIL,
         autofocus= True,
+        width = 350,
     )
 
     password_field = ft.TextField(
@@ -18,6 +19,7 @@ def build_login_view(page: ft.Page):
         can_reveal_password = True,
         password = True,
         on_submit=lambda e: login_clicked(e),
+        width = 350,
     )
     error_text = ft.Text(color=ft.Colors.ERROR, visible=False)
 
@@ -71,9 +73,10 @@ def build_login_view(page: ft.Page):
                         password_field,
                         error_text,
                         ft.FilledButton(content=ft.Text("Log in"), on_click=login_clicked),
-                        ft.TextButton("Don't have an account? Sign up", on_click=create_account),
+                        ft.FilledButton(content=ft.Text("Sign up"), on_click=create_account),
                     ],
                     spacing=16,
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 )
             )
 
