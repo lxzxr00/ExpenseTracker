@@ -1,28 +1,53 @@
 import flet as ft
 import views.user
-from views.user import user_account
 
 
 # Login View Screen
 
 def build_login_view(page: ft.Page):
+    user = views.user.current_user
 
-    email_field = ft.TextField(keyboard_type = ft.KeyboardType.TEXT)
-    password_field = ft.TextField(keyboard_type = ft.KeyboardType.TEXT,
-                                  password = True)
+    email_field = ft.TextField(
+        label="Email",
+        keyboard_type = ft.KeyboardType.EMAIL,
+        autofocus= True,
+        width = 350,
+    )
+
+    password_field = ft.TextField(
+        label="Password",
+        can_reveal_password = True,
+        password = True,
+        on_submit=lambda e: login_clicked(e),
+        width = 350,
+    )
+    error_text = ft.Text(color=ft.Colors.ERROR, visible=False)
 
     def login_clicked(e):
-        if email_field.value == "" or password_field.value == "":
-            print("username or password field is empty")
+        email_field.error_text = None
+        password_field.error_text = None
+        error_text.visible = False
+
+        email = str(email_field.value or "").strip()
+        password = str(password_field.value or "")
+
+        if not email:
+            email_field.error_text = "Required"
+        if not password:
+            password_field.error_text = "Required"
+        if not email or not password:
+            page.update()
             return
-        print("Email entered : ", email_field.value)
-        print("Password entered : ", password_field.value)
-        views.user.current_user.login(email_field.value, password_field.value)
-        if views.user.current_user.is_logged_in:
-            print("Logged in")
-            page.navigate("/core")
+
+        if user.login(email, password):
+            if user.has_profile():
+                page.navigate("/core")
+            else:
+                page.navigate("/setup_profile")
         else:
-            print("Login failed")
+            error_text.value = "Incorrect email or password"
+            error_text.visible = True
+            page.update()
 
     def create_account(e):
         page.navigate("/signup")
@@ -44,13 +69,14 @@ def build_login_view(page: ft.Page):
                             width = float("inf"),
                             padding = ft.Padding( 0, 50, 0, 50),
                         ),
-                        ft.Text("Email : "),
-                        ft.Container(email_field, alignment = ft.Alignment( 0, 0),),
-                        ft.Text("Password : "),
-                        ft.Container(password_field, alignment = ft.Alignment( 0, 0),),
-                        ft.FilledButton(content = ft.Text(" Log in "), on_click = login_clicked),
-                        ft.FilledButton(content = ft.Text("Sign up"), on_click = create_account)
-                    ]
+                        email_field,
+                        password_field,
+                        error_text,
+                        ft.FilledButton(content=ft.Text("Log in"), on_click=login_clicked),
+                        ft.FilledButton(content=ft.Text("Sign up"), on_click=create_account),
+                    ],
+                    spacing=16,
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 )
             )
 

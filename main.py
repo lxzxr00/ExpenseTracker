@@ -1,5 +1,6 @@
 import flet as ft
 from views.login_view import build_login_view
+from views.setup_profile_view import build_setup_profile_view
 from views.signup_view import build_signup_view
 from views.core_view import build_main_menu_view
 from views.add_expense_view import build_add_expense_view
@@ -49,6 +50,8 @@ def main(page : ft.Page,):
             page.views.append(build_transfer_funds_view(page))
         if page.route == "/settings":
             page.views.append(build_settings_view(page))
+        if page.route == "/setup_profile":
+            page.views.append(build_setup_profile_view(page))
         # Always need to update the page after the route is changed, so that you see the new page
         page.update()
 

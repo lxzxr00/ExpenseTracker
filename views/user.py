@@ -1,4 +1,5 @@
 from db import supabase
+import random
 
 # We're going to use this file to store our very important user variables
 # For now, we're not going to be concerned with hashing the string values
@@ -12,6 +13,8 @@ from db import supabase
 
 class user_account:
     def __init__(self):
+        self.display_name = ""
+        self.tag = ""
         self.email = ""
         self.user_id = None
         self.is_logged_in = False
@@ -32,6 +35,8 @@ class user_account:
             )
             self.is_logged_in = True
             self.email = response.user.email
+            self.user_id = response.user.id
+            self.load_profile()
             print("Successfully logged in")
             return True
         except Exception as err:
@@ -43,8 +48,12 @@ class user_account:
         self.is_logged_in = False
         self.email = ""
         self.user_id = None
+        self.display_name = ""
+        self.tag = ""
 
     def get_username(self):
+        if self.display_name:
+            return f"{self.display_name}#{self.tag}"
         return self.email.split("@")[0]
 
     def add_expense(self, label, amount, category_id=None):
@@ -130,6 +139,108 @@ class user_account:
             return True
         except Exception as err:
             print("Could not delete Category: ", err)
+            return False
+
+# We need to create profiles, so that these accounts can interact with one another =====================================
+
+    def load_profile(self):
+        try:
+            response = (
+                supabase.table("profiles")
+                .select("display_name, tag")
+                .eq("id", self.user_id)
+                .execute()
+            )
+            if response.data:
+                self.display_name = response.data[0]["display_name"]
+                self.tag = response.data[0]["tag"]
+                return True
+        except Exception as err:
+            print("Load profile failed: ", err)
+            return False
+
+    def has_profile(self):
+        return bool(self.display_name)
+
+    def create_profile(self, display_name):
+        # We're gonna make tags based on userID, but if they return collisions, we'll use random ones
+        base = int(self.user_id.replace("-", "")[:8], 16) % 10000
+        for attempt in range(5):
+            number = base if attempt == 0 else random.randint(0, 9999)
+            tag = f"{number:04d}"
+            try:
+                supabase.table("profiles").insert(
+                    {"id": self.user_id, "display_name": display_name, "tag": tag}
+                ).execute()
+                self.display_name = display_name
+                self.tag = tag
+                return True
+            except Exception as err:
+                if "duplicate" not in str(err).lower():
+                    print("Could not create profile", err)
+                    return False
+        return False
+
+    def search_profiles(self, query):
+        query = query.strip()
+        if not query:
+            return []
+        try:
+            request = supabase.table("profiles").select("id, display_name, tag")
+            if "#" in query:
+                name, tag = query.split("#", 1)
+                request = request.ilike("display_name", name.strip()).eq("tag", tag.strip())
+            else:
+                request = request.ilike("display_name", f"%{query}%")
+            res = request.neq("id", self.user_id).limit(20).execute()
+            return res.data
+        except Exception as err:
+            print("Search profile failed: ", err)
+            return []
+
+# Now we need to make the groups, this has already been added on supabase
+
+    def get_groups(self):
+        try:
+            response = (
+                supabase.table("group_members")
+                .select("status, groups(id, name, owner_id)")
+                .eq("user_id", self.user_id)
+                .execute()
+            )
+            return [row for row in response.data if row.get("groups")]
+        except Exception as err:
+            print("Could not load groups:", err)
+            return []
+
+    def create_group(self, name, invitee_ids):
+        try:
+            response = supabase.rpc(
+                "create_group", {"group_name": name, "invitee_ids": invitee_ids}
+            ).execute()
+            return response.data
+        except Exception as err:
+            print("Could not create group:", err)
+            return None
+
+    def accept_invite(self, group_id):
+        try:
+            supabase.table("group_members").update({"status": "member"}).eq(
+                "group_id", group_id
+            ).eq("user_id", self.user_id).execute()
+            return True
+        except Exception as err:
+            print("Could not accept invite:", err)
+            return False
+
+    def decline_invite(self, group_id):
+        try:
+            supabase.table("group_members").delete().eq("group_id", group_id).eq(
+                "user_id", self.user_id
+            ).execute()
+            return True
+        except Exception as err:
+            print("Could not decline invite:", err)
             return False
 
 
