@@ -80,8 +80,8 @@ def build_add_groups_view(page: ft.Page):
             refresh()
 
     def open_group(group):
-        # Next step: navigate to the group's payments page
-        print("Open group:", group["name"])
+        user.current_group = group
+        page.navigate("/group")
 
     # Using a dialog box for group creations =================================================================
 
