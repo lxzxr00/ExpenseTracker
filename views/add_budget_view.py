@@ -3,6 +3,8 @@ import views.user
 from views.user import user_account, current_user
 from views.widgets import money
 
+
+# The colors that we'll use for the categories  ========================================================================
 PALETTE = [
     "#E57373", "#F06292", "#BA68C8", "#7986CB", "#4FC3F7",
     "#4DB6AC", "#81C784", "#FFD54F", "#FFB74D", "#A1887F",

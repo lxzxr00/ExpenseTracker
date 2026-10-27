@@ -16,6 +16,80 @@ def build_main_menu_view(page: ft.Page):
     expense_list = ft.Column(spacing=0)
     UNCATEGORIZED_COLOR = "#9E9E9E"
     summary = ft.Column(spacing=12)
+    sort_mode = "newest"
+    category_filter = "all"
+
+    # Needed sort function for the user case ===========================================================================
+    SORT_OPTIONS = {
+        "newest": "Newest first",
+        "oldest": "Oldest first",
+        "high": "Highest amount",
+        "low": "Lowest amount",
+    }
+
+    def visible_expenses():
+        # Filter by category
+        if category_filter == "all":
+            items = list(expenses)
+        elif category_filter == "none":
+            items = [x for x in expenses if x.get("category_id") is None]
+        else:
+            items = [x for x in expenses if x.get("category_id") == int(category_filter)]
+
+        # Sort
+        if sort_mode == "newest":
+            items.sort(key=lambda x: x["created_at"], reverse=True)
+        elif sort_mode == "oldest":
+            items.sort(key=lambda x: x["created_at"])
+        elif sort_mode == "high":
+            items.sort(key=lambda x: float(x["amount"]), reverse=True)
+        elif sort_mode == "low":
+            items.sort(key=lambda x: float(x["amount"]))
+        return items
+
+    def on_sort_change(e):
+        nonlocal sort_mode, visible_count
+        sort_mode = e.control.value
+        visible_count = default_count
+        render_list()
+        page.update()
+
+    def on_filter_change(e):
+        nonlocal category_filter, visible_count
+        category_filter = e.control.value
+        visible_count = default_count
+        render_list()
+        page.update()
+
+    def compact_dropdown(**kwargs):
+        return ft.Dropdown(
+            filled=True,
+            fill_color=ft.Colors.SURFACE_CONTAINER_LOW,
+            border_color=ft.Colors.TRANSPARENT,
+            border_radius=12,
+            text_size=14,
+            expand=True,
+            **kwargs,
+        )
+
+    filter_dropdown = compact_dropdown(
+        value=category_filter,
+        leading_icon=ft.Icons.FILTER_LIST,
+        options=[
+                    ft.dropdown.Option(key="all", text="All categories"),
+                    ft.dropdown.Option(key="none", text="Uncategorized"),
+                ]
+                + [ft.dropdown.Option(key=str(c["id"]), text=c["name"]) for c in categories],
+        on_select=on_filter_change,
+    )
+
+    sort_dropdown = compact_dropdown(
+        value=sort_mode,
+        leading_icon=ft.Icons.SORT,
+        options=[ft.dropdown.Option(key=k, text=v) for k, v in SORT_OPTIONS.items()],
+        on_select=on_sort_change,
+    )
+    # ==================================================================================================================
 
     def cents(value):
         return int(round(value * 100))
@@ -24,6 +98,7 @@ def build_main_menu_view(page: ft.Page):
     # Flet doesn't have a widget that can use more than one color, so we're going to try and make one ==================
     def render_summary():
         # We need to add up spending by category first
+        # We need to create a dictionary that correlates the category_id with the totals of that category
         totals = {}
         for expense in expenses:
             cid = expense.get("category_id")
@@ -81,6 +156,8 @@ def build_main_menu_view(page: ft.Page):
             )
 
         # Per category warnings ==============================================================================
+        # Once the amount spent exceeds the budget per category, display a warning near the legend ===========
+
         warnings = []
         for c in categories:
             if c["budget"] is None:
@@ -125,8 +202,14 @@ def build_main_menu_view(page: ft.Page):
     #This updates and builds the tiles, as well as gives them their functionality ======================================
     def render_list():
         expense_list.controls.clear()
+        shown = visible_expenses()
 
-        for expense in expenses[:visible_count]:
+        if not shown:
+            expense_list.controls.append(
+                ft.Text("No expenses match this filter.", italic=True)
+            )
+
+        for expense in shown[:visible_count]:
             cat = expense.get("categories")
             date = expense["created_at"][:10]
             expense_list.controls.append(
@@ -137,13 +220,13 @@ def build_main_menu_view(page: ft.Page):
                     ),
                     title=ft.Text(expense["label"]),
                     subtitle=ft.Text(f"{date} - {cat['name']}" if cat else date),
-                    trailing=ft.Text(f"${float(expense['amount']):,.2f}", size=20),
+                    trailing=ft.Text(money(expense["amount"]), size=20),
                     on_click=lambda e, expense=expense: open_edit_dialog(expense),
                 )
             )
 
         buttons=[]
-        if len(expenses) > visible_count:
+        if len(shown) > visible_count:
             buttons.append(
                 ft.TextButton(
                     "Show more",
@@ -189,6 +272,11 @@ def build_main_menu_view(page: ft.Page):
             keyboard_type=ft.KeyboardType.NUMBER,
         )
         category_field = category_dropdown(categories, expense.get("category_id"))
+        # Added in for contributions in groups, you cant remove contributions in the dashboard =========================
+        is_contribution = expense.get("contribution_id") is not None
+        if is_contribution:
+            amount_field.disabled = True
+            amount_field.helper_text = "Group contribution — amount can't be changed"
 
         def save(e):
             label_field.error_text = None
@@ -217,9 +305,12 @@ def build_main_menu_view(page: ft.Page):
                     {"name": cat["name"], "color": cat["color"]} if cat else None
                 )
                 page.pop_dialog()
+                # Updates the displayed list and the whole page once the update is complete
                 render_list()
                 page.update()
 
+        # Because expenses are the most significant value, it asks you if you are sure you want to delete the expense
+        # Calls cancel and delete functions
         def confirm_delete(e):
             page.pop_dialog()
             page.show_dialog(
@@ -240,6 +331,7 @@ def build_main_menu_view(page: ft.Page):
                 )
             )
 
+        # Meant for the deletion of expense
         def delete(e):
             if views.user.current_user.delete_expense(expense["id"]):
                 expenses.remove(expense)
@@ -247,24 +339,32 @@ def build_main_menu_view(page: ft.Page):
                 render_list()
                 page.update()
 
+        # The dialog mini-view that pops up when you press on a Tile object
+        # Calls the confirm delete function and the save function displayed earlier
+        actions = []
+        if not is_contribution:
+            actions.append(
+                ft.TextButton(
+                    "Delete",
+                    on_click=confirm_delete,
+                    style=ft.ButtonStyle(color=ft.Colors.ERROR),
+                )
+            )
+        actions += [
+            ft.TextButton("Cancel", on_click=lambda e: page.pop_dialog()),
+            ft.FilledButton("Save", on_click=save),
+        ]
 
+        # The dialog mini-view that pops up when you press on a Tile object
         page.show_dialog(
             ft.AlertDialog(
-                title="Edit expense",
+                title=ft.Text("Edit expense"),
                 content=ft.Column(
                     [label_field, amount_field, category_field],
                     tight=True,
                     width=320,
                 ),
-                actions=[
-                    ft.TextButton(
-                        "Delete",
-                        on_click=confirm_delete,
-                        style=ft.ButtonStyle(color=ft.Colors.ERROR),
-                    ),
-                    ft.TextButton("Cancel", on_click=lambda e: page.pop_dialog()),
-                    ft.TextButton("Save", on_click=save),
-                ]
+                actions=actions,
             )
         )
 
@@ -278,18 +378,6 @@ def build_main_menu_view(page: ft.Page):
 
     def add_expense_clicked(e):
         page.navigate("/add_expense")
-
-    def add_budget_clicked(e):
-        page.navigate("/add_budget")
-
-    def add_groups_clicked(e):
-        page.navigate("/add_groups")
-
-    def transfer_funds_clicked(e):
-        page.navigate("/transfer_funds")
-
-    def settings_clicked(e):
-        page.navigate("/settings")
 
     async def handle_show_drawer(e):
         await page.show_drawer()
@@ -310,6 +398,9 @@ def build_main_menu_view(page: ft.Page):
         elif index == 5:
             page.navigate("/settings")
 
+
+    # Simple Drawer component that correlates to the section above,
+    # It houses the buttons that redirect you to other views. DOES NOT INCLUDE THE ADD EXPENSE BUTTON
     drawer = ft.NavigationDrawer(
         on_change=handle_drawer_change,
         controls=[
@@ -327,7 +418,7 @@ def build_main_menu_view(page: ft.Page):
             ft.NavigationDrawerDestination(
                 icon=ft.Icons.GROUP_ADD_OUTLINED,
                 selected_icon=ft.Icons.GROUP_ADD,
-                label="Create Groups",
+                label="Groups",
             ),
             ft.NavigationDrawerDestination(
                 icon=ft.Icons.SEND_OUTLINED,
@@ -351,7 +442,6 @@ def build_main_menu_view(page: ft.Page):
             ),
         ],
     )
-
 
     return ft.View(
         route="/core",
@@ -390,7 +480,14 @@ def build_main_menu_view(page: ft.Page):
                             bgcolor=ft.Colors.SURFACE_CONTAINER_LOW,
                             width=float("inf"),
                         ),
-                        ft.Text("Recent expenses", size=18, weight=ft.FontWeight.BOLD),
+                        ft.Row(
+                            [
+                                ft.Text("Expenses", size=18, weight=ft.FontWeight.BOLD, expand=True),
+                                sort_dropdown,
+                            ],
+                            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                        ),
+                        filter_dropdown,
                         expense_list,
                         ft.FilledButton(content=ft.Text("Logout"), on_click = logout_clicked),
                     ]
